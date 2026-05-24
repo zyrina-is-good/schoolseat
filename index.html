@@ -785,6 +785,15 @@
         }
 
         loadSeats();
+
+        // Fitur Auto Refresh (Supabase Realtime)
+        supabaseClient
+            .channel('realtime-seats')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'Seats' }, payload => {
+                console.log('Update terdeteksi dari database:', payload);
+                loadSeats(); // Refresh data otomatis
+            })
+            .subscribe();
     </script>
 </body>
 
