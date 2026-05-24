@@ -141,7 +141,7 @@
 </head>
 <body>
 
-  <h1>🎬 Pilih Kursi</h1>
+  <h1>Pilih Kursi</h1>
   <div class="note">Klik kursi untuk isi / lihat detail</div>
   <div class="container" id="seats"></div>
 
@@ -192,7 +192,7 @@
           if (!absen) return;
 
           const { error: insertError } = await supabase
-            .from("seats")
+            .from("Seats")
             .insert({
               seat_id: seatId,
               name: name,
