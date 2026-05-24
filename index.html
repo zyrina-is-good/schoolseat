@@ -51,7 +51,7 @@
             justify-content: center;
             align-items: center;
             gap: 30px;
-            margin-bottom: 60px;
+            margin-bottom: 100px;
         }
 
         .whiteboard {
@@ -67,11 +67,15 @@
 
         .teacher-desk {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
-            padding: 12px 35px;
+            padding: 30px 20px;
+            width: 160px;
+            text-align: center;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 700;
+            letter-spacing: 2px;
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            margin: 0 auto 60px auto;
         }
 
         .door-container {
@@ -97,12 +101,13 @@
             flex-direction: column;
             gap: 30px;
             align-items: center;
-            padding-right: 40px;
+            width: 100%;
         }
 
         .desk-row {
             display: flex;
-            gap: 40px;
+            width: 100%;
+            justify-content: space-between;
         }
 
         .desk {
@@ -538,6 +543,7 @@
             <div class="door-container">
                 <div class="door">PINTU</div>
             </div>
+            <div class="teacher-desk">MEJA GURU</div>
             <div class="container" id="seats"></div>
         </div>
     </div>
