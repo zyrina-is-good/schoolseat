@@ -68,7 +68,7 @@
     seatsDiv.innerHTML = "";
     
     const { data, error } = await supabase
-      .from("seats")
+      .from("Seats")
       .select("*");
 
     if (error) {
