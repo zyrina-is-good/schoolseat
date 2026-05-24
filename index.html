@@ -67,15 +67,56 @@
 
         .teacher-desk {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
-            padding: 30px 20px;
+            padding: 20px;
             width: 160px;
             text-align: center;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: 700;
             letter-spacing: 2px;
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
             margin: 0 auto 60px auto;
+        }
+
+        .schedule-board {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px 25px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .schedule-board:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+            border-color: rgba(96, 165, 250, 0.5);
+        }
+
+        .sb-status {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+
+        .sb-subject {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fbbf24;
+            margin-bottom: 2px;
+        }
+
+        .sb-time {
+            font-size: 13px;
+            color: #e2e8f0;
         }
 
         .door-container {
@@ -344,6 +385,31 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
+        .modal-content select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            box-sizing: border-box;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .modal-content select:focus {
+            border-color: #3b82f6;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-content select option {
+            background: #1e293b;
+            color: white;
+        }
+
         .detail-info p {
             margin: 10px 0;
             font-size: 15px;
@@ -467,23 +533,21 @@
 
 <body>
 
-    <!-- Modals -->
     <div id="modal-overlay" class="modal-overlay" style="display: none;">
-        <!-- Booking Modal -->
         <div id="modal-booking" class="modal-content" style="display: none;">
             <h3>Daftar Kursi <span id="booking-seat-id"></span></h3>
             <select id="booking-name"
                 style="width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: white; font-family: 'Outfit', sans-serif; outline: none;">
                 <option value="" disabled selected>Pilih Nama</option>
             </select>
-            <input type="number" id="booking-absen" placeholder="Nomor Absen otomatis" readonly style="background: rgba(255,255,255,0.02); color: #94a3b8; cursor: not-allowed; border-color: rgba(255,255,255,0.05);">
+            <input type="number" id="booking-absen" placeholder="Nomor Absen otomatis" readonly
+                style="background: rgba(255,255,255,0.02); color: #94a3b8; cursor: not-allowed; border-color: rgba(255,255,255,0.05);">
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal()">Batal</button>
                 <button class="btn-primary" onclick="submitBooking()">Simpan</button>
             </div>
         </div>
 
-        <!-- Detail Modal -->
         <div id="modal-detail" class="modal-content" style="display: none;">
             <h3>Detail Kursi <span id="detail-seat-id"></span></h3>
             <div class="detail-info">
@@ -495,7 +559,6 @@
             </div>
         </div>
 
-        <!-- Confirm Modal -->
         <div id="modal-confirm" class="modal-content" style="display: none;">
             <h3>Konfirmasi Hapus</h3>
             <p>Hapus data kursi <span id="confirm-seat-id" style="font-weight:bold;"></span> atas nama <span
@@ -506,13 +569,71 @@
             </div>
         </div>
 
-        <!-- Login Modal -->
         <div id="modal-login" class="modal-content" style="display: none;">
             <h3>Login Admin</h3>
             <input type="password" id="login-password" placeholder="Masukkan Password Admin">
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal()">Batal</button>
                 <button class="btn-primary" onclick="submitLogin()">Masuk</button>
+            </div>
+        </div>
+
+        <div id="modal-schedule" class="modal-content" style="display: none;">
+            <h3>Informasi Jadwal</h3>
+            <div id="schedule-info-display">
+                <p><strong id="s-subject-label">Pelajaran:</strong> <span id="s-subject" style="color:#fbbf24; font-weight:bold;">-</span></p>
+                <p><strong>Waktu:</strong> <span id="s-time">-</span></p>
+                <p><strong>Info Tambahan:</strong> <span id="s-note">-</span></p>
+            </div>
+
+            <div id="schedule-tomorrow-display" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight:bold; color:#60a5fa; margin-bottom:10px;">📅 Jadwal Besok:</p>
+                <ul id="s-tomorrow-list" style="margin:0; padding-left:20px; font-size:14px; color:#e2e8f0; line-height:1.6;"></ul>
+            </div>
+
+            <div id="schedule-edit-form"
+                style="display: none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; max-height: 400px; overflow-y: auto;">
+                <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">Mode Jadwal</label>
+                <select id="s-mode" onchange="toggleScheduleModeUI()">
+                    <option value="auto">Otomatis (Ikut Jadwal)</option>
+                    <option value="manual">Manual (Isi Sendiri)</option>
+                </select>
+
+                <div id="s-manual-ui" style="display: none;">
+                    <input type="text" id="input-s-subject" placeholder="Pelajaran (Cth: Matematika)">
+                    <input type="text" id="input-s-time" placeholder="Waktu (Cth: 07:00 - 08:30)">
+                </div>
+
+                <div id="s-auto-ui">
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">Tipe Waktu</label>
+                    <select id="s-timing-type">
+                        <option value="auto_detect">Deteksi Otomatis (Ikut Kalender)</option>
+                        <option value="normal">Normal (40 Menit / JP)</option>
+                        <option value="ramadhan">Ramadhan (35 Menit / JP)</option>
+                    </select>
+
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">Mata Pelajaran
+                        (Pisahkan koma, cth: MTK, MTK, Indo)</label>
+                    <input type="text" id="input-s-senin" placeholder="Senin (Jam 1, Jam 2, dst)">
+                    <input type="text" id="input-s-selasa" placeholder="Selasa">
+                    <input type="text" id="input-s-rabu" placeholder="Rabu">
+                    <input type="text" id="input-s-kamis" placeholder="Kamis">
+                    <input type="text" id="input-s-jumat" placeholder="Jumat">
+                </div>
+
+                <input type="text" id="input-s-note" placeholder="Catatan Tambahan (Opsional)" style="margin-top:10px;">
+
+                <div class="modal-actions" style="margin-top:10px;">
+                    <button class="btn-danger" style="margin-right:auto;"
+                        onclick="clearScheduleInfo()">Kosongkan</button>
+                    <button class="btn-primary" onclick="saveScheduleInfo()">Siarkan</button>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Tutup</button>
+                <button class="btn-primary" id="btn-edit-schedule" style="display:none;"
+                    onclick="toggleScheduleEdit()">Edit (Admin)</button>
             </div>
         </div>
     </div>
@@ -539,11 +660,16 @@
         <div class="classroom">
             <div class="front-wall">
                 <div class="whiteboard">PAPAN TULIS</div>
+                <div class="schedule-board" id="schedule-board" onclick="openScheduleModal()">
+                    <div class="sb-status" id="sb-display-status">MEMUAT JADWAL...</div>
+                    <div class="sb-subject" id="sb-display-subject">-</div>
+                    <div class="sb-time" id="sb-display-time">-</div>
+                </div>
             </div>
             <div class="door-container">
                 <div class="door">PINTU</div>
             </div>
-            <div class="teacher-desk">MEJA GURU</div>
+            <div class="teacher-desk" id="teacher-desk">MEJA GURU</div>
             <div class="container" id="seats"></div>
         </div>
     </div>
@@ -575,6 +701,270 @@
 
         let isAdminLoggedIn = false;
         let currentSeat = null;
+
+        let currentTeacherInfo = { mode: 'auto', subject: '-', time: '-', note: '-' };
+        let teacherInterval = null;
+
+        const defaultSchedule = {
+            '1': "PJOK, PJOK, PJOK, B.INDO, B.INDO, B.INDO, BK, B.JAWA, B.JAWA",
+            '2': "Matematika, Matematika, Matematika, IPS, IPS, B. INGG, KEAGAMAAN, B.INGG, IPA, IPA",
+            '3': "PPKn, PPKn, PPKn, SB/Prky, SB/Prky, SB/Prky, Informatika, Informatika, Informatika",
+            '4': "B.INGG, B.INGG, ISLAM, ISLAM, ISLAM, IPS, IPS, MTK, MTK",
+            '5': "B.INDO, B.INDO, B.INDO, IPA, IPA, IPA"
+        };
+
+        function checkIsRamadhan() {
+            try {
+                const formatter = new Intl.DateTimeFormat('en-US-u-ca-islamic', { month: 'numeric' });
+                const monthStr = formatter.format(new Date());
+                return monthStr === '9';
+            } catch (e) {
+                const month = new Date().getMonth();
+                return month === 1 || month === 2;
+            }
+        }
+
+        const timings = {
+            ramadhan: [
+                { id: 'prep', name: 'Tadarus/Doa/Literasi', start: '07:00', end: '07:30' },
+                { id: 1, name: 'Jam 1', start: '07:30', end: '08:05' },
+                { id: 2, name: 'Jam 2', start: '08:05', end: '08:40' },
+                { id: 3, name: 'Jam 3', start: '08:40', end: '09:15' },
+                { id: 'ist1', name: 'Istirahat 1', start: '09:15', end: '09:30' },
+                { id: 4, name: 'Jam 4', start: '09:30', end: '10:05' },
+                { id: 5, name: 'Jam 5', start: '10:05', end: '10:40' },
+                { id: 6, name: 'Jam 6', start: '10:40', end: '11:15' },
+                { id: 'ist2', name: 'Istirahat 2', start: '11:15', end: '11:35' },
+                { id: 7, name: 'Jam 7', start: '11:35', end: '12:10' },
+                { id: 8, name: 'Jam 8', start: '12:10', end: '12:45' },
+                { id: 9, name: 'Jam 9', start: '12:45', end: '13:20' },
+                { id: 10, name: 'Jam 10', start: '13:20', end: '13:55' }
+            ],
+            normal: [
+                { id: 'prep', name: 'Tadarus/Doa/Literasi', start: '07:00', end: '07:30' },
+                { id: 1, name: 'Jam 1', start: '07:30', end: '08:10' },
+                { id: 2, name: 'Jam 2', start: '08:10', end: '08:50' },
+                { id: 3, name: 'Jam 3', start: '08:50', end: '09:30' },
+                { id: 'ist1', name: 'Istirahat 1', start: '09:30', end: '09:45' },
+                { id: 4, name: 'Jam 4', start: '09:45', end: '10:25' },
+                { id: 5, name: 'Jam 5', start: '10:25', end: '11:05' },
+                { id: 6, name: 'Jam 6', start: '11:05', end: '11:45' },
+                { id: 'ist2', name: 'Istirahat 2', start: '11:45', end: '12:05' },
+                { id: 7, name: 'Jam 7', start: '12:05', end: '12:45' },
+                { id: 8, name: 'Jam 8', start: '12:45', end: '13:25' },
+                { id: 9, name: 'Jam 9', start: '13:25', end: '14:05' },
+                { id: 10, name: 'Jam 10', start: '14:05', end: '14:45' }
+            ]
+        };
+
+        function timeToMins(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function getCurrentSlot(timingType) {
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            const schedule = timings[timingType];
+
+            if (currentMins < timeToMins(schedule[0].start)) return { id: 'before', name: 'Belum Mulai', start: '-', end: '-' };
+            if (currentMins >= timeToMins(schedule[schedule.length - 1].end)) return { id: 'after', name: 'Pulang', start: '-', end: '-' };
+
+            for (let slot of schedule) {
+                if (currentMins >= timeToMins(slot.start) && currentMins < timeToMins(slot.end)) {
+                    return slot;
+                }
+            }
+            return null;
+        }
+
+        function renderScheduleBoard() {
+            if (!currentTeacherInfo) return;
+
+            if (currentTeacherInfo.mode === 'auto') {
+                const d = new Date();
+                const dayIdx = d.getDay();
+
+                let tType = currentTeacherInfo.timingType || 'auto_detect';
+                if (tType === 'auto_detect') {
+                    tType = checkIsRamadhan() ? 'ramadhan' : 'normal';
+                }
+                const slot = getCurrentSlot(tType);
+
+                if (dayIdx === 0 || dayIdx === 6) {
+                    currentScheduleStatusId = 'after';
+                    updateScheduleBoardUIText('INFO JADWAL', 'Hari Libur', '-', currentTeacherInfo.note || 'Selamat Berakhir Pekan');
+                } else if (slot) {
+                    currentScheduleStatusId = slot.id;
+                    const isRamadhanMode = (tType === 'ramadhan');
+                    let statusLabel = typeof slot.id === 'number' ? `JAM KE-${slot.id}` : 'INFO JADWAL';
+                    
+                    if (typeof slot.id === 'number') {
+                        let subjectsForDayStr = (currentTeacherInfo.schedule && currentTeacherInfo.schedule[dayIdx]) ? currentTeacherInfo.schedule[dayIdx] : defaultSchedule[dayIdx];
+                        let subjectsForDay = subjectsForDayStr ? subjectsForDayStr.split(',').map(s => s.trim()) : [];
+                        let subjectName = subjectsForDay[slot.id - 1] || slot.name;
+                        updateScheduleBoardUIText(statusLabel, subjectName, `${slot.start} - ${slot.end}`, currentTeacherInfo.note || (isRamadhanMode ? 'Mode Otomatis (Ramadhan)' : 'Mode Otomatis'));
+                    } else {
+                        updateScheduleBoardUIText(statusLabel, slot.name, `${slot.start} - ${slot.end}`, currentTeacherInfo.note || (isRamadhanMode ? 'Mode Otomatis (Ramadhan)' : 'Mode Otomatis'));
+                    }
+                }
+            } else {
+                currentScheduleStatusId = null;
+                updateScheduleBoardUIText(
+                    'PENGUMUMAN',
+                    currentTeacherInfo.subject || 'Kosong',
+                    currentTeacherInfo.time || '-',
+                    currentTeacherInfo.note || '-'
+                );
+            }
+        }
+
+        function updateScheduleBoardUIText(status, subject, time, note) {
+            document.getElementById('sb-display-status').innerText = status;
+            document.getElementById('sb-display-subject').innerText = subject;
+            document.getElementById('sb-display-time').innerText = time;
+            
+            let label = 'Pelajaran:';
+            if (status === 'PENGUMUMAN' || subject === 'Hari Libur' || subject === 'Belum Mulai' || subject === 'Pulang' || subject.includes('Istirahat') || subject.includes('Tadarus')) {
+                label = 'Keterangan:';
+            }
+            document.getElementById('s-subject-label').innerText = label;
+            document.getElementById('s-subject').innerText = subject;
+            document.getElementById('s-time').innerText = time;
+            document.getElementById('s-note').innerText = note;
+        }
+
+        function updateScheduleBoardUI(info) {
+            if (!info.mode) info.mode = 'auto';
+            currentTeacherInfo = info;
+            renderScheduleBoard();
+
+            if (!teacherInterval) {
+                teacherInterval = setInterval(renderScheduleBoard, 60000);
+            }
+        }
+
+        function openScheduleModal() {
+            document.getElementById('btn-edit-schedule').style.display = isAdminLoggedIn ? 'block' : 'none';
+            document.getElementById('schedule-edit-form').style.display = 'none';
+            
+            const tomorrowDiv = document.getElementById('schedule-tomorrow-display');
+            const tomorrowList = document.getElementById('s-tomorrow-list');
+            
+            if (currentTeacherInfo.mode === 'auto' && currentScheduleStatusId === 'after') {
+                const tomorrowDate = new Date();
+                tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+                const dayIdx = tomorrowDate.getDay();
+                
+                if (dayIdx >= 1 && dayIdx <= 5) {
+                    let schedStr = (currentTeacherInfo.schedule && currentTeacherInfo.schedule[dayIdx]) ? currentTeacherInfo.schedule[dayIdx] : defaultSchedule[dayIdx];
+                    let subjects = schedStr ? schedStr.split(',').map(s => s.trim()) : [];
+                    
+                    let html = '';
+                    subjects.forEach((subj, idx) => {
+                        if(subj) html += `<li>Jam ${idx + 1}: ${subj}</li>`;
+                    });
+                    
+                    tomorrowList.innerHTML = html || '<li>Tidak ada jadwal</li>';
+                    tomorrowDiv.style.display = 'block';
+                } else {
+                    tomorrowDiv.style.display = 'none';
+                }
+            } else {
+                tomorrowDiv.style.display = 'none';
+            }
+
+            openModal('modal-schedule');
+        }
+
+        function toggleScheduleModeUI() {
+            const mode = document.getElementById('s-mode').value;
+            document.getElementById('s-manual-ui').style.display = mode === 'manual' ? 'block' : 'none';
+            document.getElementById('s-auto-ui').style.display = mode === 'auto' ? 'block' : 'none';
+        }
+
+        function toggleScheduleEdit() {
+            const form = document.getElementById('schedule-edit-form');
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+
+                document.getElementById('s-mode').value = currentTeacherInfo.mode || 'manual';
+                document.getElementById('input-s-subject').value = currentTeacherInfo.subject !== 'Kosong' ? (currentTeacherInfo.subject || '') : '';
+                document.getElementById('input-s-time').value = currentTeacherInfo.time !== '-' ? (currentTeacherInfo.time || '') : '';
+                document.getElementById('input-s-note').value = currentTeacherInfo.note !== '-' ? (currentTeacherInfo.note || '') : '';
+
+                document.getElementById('s-timing-type').value = currentTeacherInfo.timingType || 'auto_detect';
+
+                const sched = currentTeacherInfo.schedule || defaultSchedule;
+                document.getElementById('input-s-senin').value = sched['1'] || '';
+                document.getElementById('input-s-selasa').value = sched['2'] || '';
+                document.getElementById('input-s-rabu').value = sched['3'] || '';
+                document.getElementById('input-s-kamis').value = sched['4'] || '';
+                document.getElementById('input-s-jumat').value = sched['5'] || '';
+
+                toggleScheduleModeUI();
+            } else {
+                form.style.display = 'none';
+            }
+        }
+
+        async function saveScheduleInfo() {
+            const mode = document.getElementById('s-mode').value;
+            const note = document.getElementById('input-s-note').value || '';
+
+            let payloadObj = { mode, note };
+
+            if (mode === 'manual') {
+                payloadObj.subject = document.getElementById('input-s-subject').value || 'Kosong';
+                payloadObj.time = document.getElementById('input-s-time').value || '-';
+            } else {
+                payloadObj.timingType = document.getElementById('s-timing-type').value;
+                payloadObj.schedule = {
+                    '1': document.getElementById('input-s-senin').value,
+                    '2': document.getElementById('input-s-selasa').value,
+                    '3': document.getElementById('input-s-rabu').value,
+                    '4': document.getElementById('input-s-kamis').value,
+                    '5': document.getElementById('input-s-jumat').value
+                };
+            }
+
+            const payload = JSON.stringify(payloadObj);
+
+            const { data: checkData } = await supabaseClient.from('Seats').select('*').eq('seat_id', 'TEACHER');
+
+            let res;
+            if (checkData && checkData.length > 0) {
+                res = await supabaseClient.from('Seats').update({ name: payload, absen: 0 }).eq('seat_id', 'TEACHER');
+            } else {
+                res = await supabaseClient.from('Seats').insert({ seat_id: 'TEACHER', name: payload, absen: 0 });
+            }
+
+            if (res.error) {
+                alert("Gagal menyimpan info jadwal");
+                console.error(res.error);
+            } else {
+                closeModal();
+                loadSeats();
+            }
+        }
+
+        async function clearScheduleInfo() {
+            const { data: checkData } = await supabaseClient.from('Seats').select('*').eq('seat_id', 'TEACHER');
+            let res;
+            if (checkData && checkData.length > 0) {
+                res = await supabaseClient.from('Seats').update({ name: null, absen: 0 }).eq('seat_id', 'TEACHER');
+            } else {
+                res = { error: null };
+            }
+
+            if (res.error) {
+                alert("Gagal mengosongkan jadwal");
+                console.error(res.error);
+            } else {
+                closeModal();
+                loadSeats();
+            }
+        }
 
         function toggleAdmin() {
             document.querySelector('.admin-panel').classList.toggle('open');
@@ -634,7 +1024,7 @@
                 }
             });
 
-            selectEl.onchange = function() {
+            selectEl.onchange = function () {
                 const sData = studentData.find(s => s.name === this.value);
                 if (sData) {
                     document.getElementById("booking-absen").value = sData.absen;
@@ -721,14 +1111,24 @@
             seatsDiv.innerHTML = "";
             if (isAdminLoggedIn) adminList.innerHTML = "";
 
-            const filledSeats = data.filter(s => s.name);
+            const filledSeats = data.filter(s => s.name && s.seat_id !== 'TEACHER');
             globalFilledSeats = filledSeats;
+
+            const teacherData = data.find(s => s.seat_id === 'TEACHER');
+            let tInfo = { mode: 'auto', subject: '-', time: '-', note: '-' };
+            if (teacherData && teacherData.name) {
+                try {
+                    tInfo = JSON.parse(teacherData.name);
+                } catch (e) {
+                    tInfo.subject = teacherData.name;
+                }
+            }
+            updateScheduleBoardUI(tInfo);
 
             if (isAdminLoggedIn) {
                 if (filledSeats.length === 0) {
                     adminList.innerHTML = '<div style="font-size:12px; opacity:0.5;">Belum ada kursi terisi</div>';
                 } else {
-                    // Urutkan berdasarkan seat_id
                     filledSeats.sort((a, b) => a.seat_id.localeCompare(b.seat_id)).forEach(s => {
                         const item = document.createElement("div");
                         item.className = "admin-item";
@@ -792,12 +1192,11 @@
 
         loadSeats();
 
-        // Fitur Auto Refresh (Supabase Realtime)
         supabaseClient
             .channel('realtime-seats')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'Seats' }, payload => {
                 console.log('Update terdeteksi dari database:', payload);
-                loadSeats(); // Refresh data otomatis
+                loadSeats();
             })
             .subscribe();
     </script>
