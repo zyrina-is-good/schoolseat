@@ -702,9 +702,6 @@
         }
 
         async function loadSeats() {
-            seatsDiv.innerHTML = "";
-            if (isAdminLoggedIn) adminList.innerHTML = "";
-
             const { data, error } = await supabaseClient
                 .from("Seats")
                 .select("*");
@@ -714,6 +711,9 @@
                 console.error(error);
                 return;
             }
+
+            seatsDiv.innerHTML = "";
+            if (isAdminLoggedIn) adminList.innerHTML = "";
 
             const filledSeats = data.filter(s => s.name);
             globalFilledSeats = filledSeats;
