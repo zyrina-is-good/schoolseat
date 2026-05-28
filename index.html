@@ -780,6 +780,17 @@
                     });
                     if (typeof renderScheduleBoard === 'function') {
                         renderScheduleBoard();
+                        if (typeof currentTeacherInfo !== 'undefined' && document.getElementById("admin-holiday-toggle")) {
+                            const d = new Date();
+                            const todayStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+                            let isH = false;
+                            if (currentTeacherInfo.holidayOverrideDate === todayStr) {
+                                isH = currentTeacherInfo.holidayOverrideValue;
+                            } else if (nationalHolidays[todayStr]) {
+                                isH = true;
+                            }
+                            document.getElementById("admin-holiday-toggle").checked = isH;
+                        }
                     }
                 }
             } catch (err) {
@@ -812,7 +823,13 @@
         ];
         let globalFilledSeats = [];
 
-        let isAdminLoggedIn = false;
+        let isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn') === 'true';
+        window.addEventListener('DOMContentLoaded', () => {
+            if (isAdminLoggedIn) {
+                document.getElementById("admin-login-area").style.display = "none";
+                document.getElementById("admin-content-area").style.display = "block";
+            }
+        });
         let currentSeat = null;
 
         let currentTeacherInfo = { mode: 'auto', subject: '-', time: '-', note: '-' };
@@ -1252,6 +1269,7 @@
             const pwd = document.getElementById("login-password").value;
             if (pwd === "Zyrina") {
                 isAdminLoggedIn = true;
+                localStorage.setItem('isAdminLoggedIn', 'true');
                 document.getElementById("admin-login-area").style.display = "none";
                 document.getElementById("admin-content-area").style.display = "block";
                 closeModal();
@@ -1263,6 +1281,7 @@
 
         function logoutAdmin() {
             isAdminLoggedIn = false;
+            localStorage.removeItem('isAdminLoggedIn');
             document.getElementById("admin-login-area").style.display = "block";
             document.getElementById("admin-content-area").style.display = "none";
             adminList.innerHTML = "";
