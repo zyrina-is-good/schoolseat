@@ -579,6 +579,42 @@
         input:checked+.slider:before {
             transform: translateX(20px);
         }
+
+        .day-tab {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #94a3b8;
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .day-tab:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .day-tab.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border-color: #3b82f6;
+        }
+        .schedule-slot-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .schedule-slot-label {
+            font-size: 12px;
+            color: #94a3b8;
+            width: 140px;
+            flex-shrink: 0;
+        }
+        .schedule-slot-input {
+            flex-grow: 1;
+            padding: 8px !important;
+            margin: 0 !important;
+        }
     </style>
 </head>
 
@@ -678,20 +714,25 @@
 
                 <div id="s-auto-ui">
                     <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">Tipe Waktu</label>
-                    <select id="s-timing-type">
+                    <select id="s-timing-type" onchange="renderScheduleInputs()">
                         <option value="auto_detect">Deteksi Otomatis (Ikut Kalender)</option>
                         <option value="normal">Normal (40 Menit / JP)</option>
                         <option value="ramadhan">Ramadhan (35 Menit / JP)</option>
                         <option value="senin_tanpa_upacara">Senin Tanpa Upacara</option>
                     </select>
 
-                    <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:5px;">Mata Pelajaran
-                        (Pisahkan koma, cth: MTK, MTK, Indo)</label>
-                    <input type="text" id="input-s-senin" placeholder="Senin (Jam 1, Jam 2, dst)">
-                    <input type="text" id="input-s-selasa" placeholder="Selasa">
-                    <input type="text" id="input-s-rabu" placeholder="Rabu">
-                    <input type="text" id="input-s-kamis" placeholder="Kamis">
-                    <input type="text" id="input-s-jumat" placeholder="Jumat">
+                    <label style="font-size:13px; color:#94a3b8; display:block; margin-top:15px; margin-bottom:5px;">Mata Pelajaran</label>
+                    <div class="day-tabs" style="display:flex; gap:5px; margin-bottom: 10px; overflow-x: auto;">
+                        <button class="day-tab active" id="tab-day-1" onclick="switchDayTab(1)">Senin</button>
+                        <button class="day-tab" id="tab-day-2" onclick="switchDayTab(2)">Selasa</button>
+                        <button class="day-tab" id="tab-day-3" onclick="switchDayTab(3)">Rabu</button>
+                        <button class="day-tab" id="tab-day-4" onclick="switchDayTab(4)">Kamis</button>
+                        <button class="day-tab" id="tab-day-5" onclick="switchDayTab(5)">Jumat</button>
+                    </div>
+
+                    <div id="schedule-inputs-container" style="display:flex; flex-direction:column; gap:8px;">
+                        <!-- inputs generated dynamically -->
+                    </div>
                 </div>
 
                 <input type="text" id="input-s-note" placeholder="Catatan Tambahan (Opsional)" style="margin-top:10px;">
@@ -768,41 +809,63 @@
     </div>
 
     <script>
+        const supabaseUrl = "https://basaafhivrfpkytcacsi.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhc2FhZmhpdnJmcGt5dGNhY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDQ0ODksImV4cCI6MjA5NTE4MDQ4OX0.-vvIoSse9Ztp_ljGb6BwVNxon1geLBCkHvBet5gq1tU";
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
         let nationalHolidays = {};
+        let dbSchedules = {};
 
         async function fetchHolidays() {
             try {
-                const res = await fetch('https://libur.deno.dev/api');
+                const [res, { data: sbHolidays }] = await Promise.all([
+                    fetch('https://libur.deno.dev/api').catch(() => ({ ok: false })),
+                    supabaseClient.from('Holidays').select('*')
+                ]);
+                
                 if (res.ok) {
                     const data = await res.json();
                     data.forEach(item => {
                         nationalHolidays[item.date] = item.name;
                     });
-                    if (typeof renderScheduleBoard === 'function') {
-                        renderScheduleBoard();
-                        if (typeof currentTeacherInfo !== 'undefined' && document.getElementById("admin-holiday-toggle")) {
-                            const d = new Date();
-                            const todayStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-                            let isH = false;
-                            if (currentTeacherInfo.holidayOverrideDate === todayStr) {
-                                isH = currentTeacherInfo.holidayOverrideValue;
-                            } else if (nationalHolidays[todayStr]) {
-                                isH = true;
-                            }
-                            document.getElementById("admin-holiday-toggle").checked = isH;
+                }
+                if (sbHolidays) {
+                    sbHolidays.forEach(h => {
+                        nationalHolidays[h.date] = h.name;
+                    });
+                }
+
+                if (typeof renderScheduleBoard === 'function') {
+                    renderScheduleBoard();
+                    if (typeof currentTeacherInfo !== 'undefined' && document.getElementById("admin-holiday-toggle")) {
+                        const d = new Date();
+                        const todayStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+                        let isH = false;
+                        if (currentTeacherInfo.holidayOverrideDate === todayStr) {
+                            isH = currentTeacherInfo.holidayOverrideValue;
+                        } else if (nationalHolidays[todayStr]) {
+                            isH = true;
                         }
+                        document.getElementById("admin-holiday-toggle").checked = isH;
                     }
                 }
             } catch (err) {
                 console.error("Gagal mengambil data libur:", err);
             }
         }
+
+        async function fetchSchedules() {
+            const { data, error } = await supabaseClient.from('Schedules').select('*');
+            if (data) {
+                data.forEach(s => {
+                    dbSchedules[s.day_id] = s.subjects;
+                });
+                if (typeof renderScheduleBoard === 'function') renderScheduleBoard();
+            }
+        }
+
         fetchHolidays();
-
-        const supabaseUrl = "https://basaafhivrfpkytcacsi.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhc2FhZmhpdnJmcGt5dGNhY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDQ0ODksImV4cCI6MjA5NTE4MDQ4OX0.-vvIoSse9Ztp_ljGb6BwVNxon1geLBCkHvBet5gq1tU";
-
-        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        fetchSchedules();
         const seatsDiv = document.getElementById("seats");
         const adminList = document.getElementById("admin-list");
         const rows = ["A", "B", "C", "D"];
@@ -839,7 +902,7 @@
             '1': "PJOK, PJOK, PJOK, B.INDO, B.INDO, B.INDO, BK, B.JAWA, B.JAWA",
             '2': "Matematika, Matematika, Matematika, IPS, IPS, B. INGG, KEAGAMAAN, B.INGG, IPA, IPA",
             '3': "PPKn, PPKn, PPKn, SB/Prky, SB/Prky, SB/Prky, Informatika, Informatika, Informatika",
-            '4': "B.INGG, B.INGG, ISLAM, ISLAM, ISLAM, IPS, IPS, MTK, MTK",
+            '4': "B.INGG, B.INGG, AGAMA, AGAMA, AGAMA, IPS, IPS, MTK, MTK",
             '5': "B.INDO, B.INDO, B.INDO, IPA, IPA, IPA"
         };
 
@@ -966,10 +1029,24 @@
                     let statusLabel = typeof slot.id === 'number' ? `JAM KE-${slot.id}` : 'INFO JADWAL';
 
                     if (typeof slot.id === 'number') {
-                        let subjectsForDayStr = (currentTeacherInfo.schedule && currentTeacherInfo.schedule[dayIdx]) ? currentTeacherInfo.schedule[dayIdx] : defaultSchedule[dayIdx];
+                        let subjectsForDayStr = dbSchedules[dayIdx] || defaultSchedule[dayIdx];
                         let subjectsForDay = subjectsForDayStr ? subjectsForDayStr.split(',').map(s => s.trim()) : [];
                         let subjectName = subjectsForDay[slot.id - 1] || slot.name;
-                        updateScheduleBoardUIText(statusLabel, subjectName, `${slot.start} - ${slot.end}`, currentTeacherInfo.note || (isRamadhanMode ? 'Mode Otomatis (Ramadhan)' : 'Mode Otomatis'));
+                        
+                        let startSlotId = slot.id;
+                        while (startSlotId > 1 && subjectsForDay[startSlotId - 2] === subjectName) {
+                            startSlotId--;
+                        }
+                        let endSlotId = slot.id;
+                        while (endSlotId < subjectsForDay.length && subjectsForDay[endSlotId] === subjectName) {
+                            endSlotId++;
+                        }
+                        
+                        let startTime = timings[tType].find(s => s.id === startSlotId)?.start || slot.start;
+                        let endTime = timings[tType].find(s => s.id === endSlotId)?.end || slot.end;
+                        statusLabel = (startSlotId === endSlotId) ? `JAM KE-${slot.id}` : `JAM KE-${startSlotId}-${endSlotId}`;
+                        
+                        updateScheduleBoardUIText(statusLabel, subjectName, `${startTime} - ${endTime}`, currentTeacherInfo.note || (isRamadhanMode ? 'Mode Otomatis (Ramadhan)' : 'Mode Otomatis'));
                     } else {
                         updateScheduleBoardUIText(statusLabel, slot.name, `${slot.start} - ${slot.end}`, currentTeacherInfo.note || (isRamadhanMode ? 'Mode Otomatis (Ramadhan)' : 'Mode Otomatis'));
                     }
@@ -1023,7 +1100,7 @@
                 const dayIdx = tomorrowDate.getDay();
 
                 if (dayIdx >= 1 && dayIdx <= 5) {
-                    let schedStr = (currentTeacherInfo.schedule && currentTeacherInfo.schedule[dayIdx]) ? currentTeacherInfo.schedule[dayIdx] : defaultSchedule[dayIdx];
+                    let schedStr = dbSchedules[dayIdx] || defaultSchedule[dayIdx];
                     let subjects = schedStr ? schedStr.split(',').map(s => s.trim()) : [];
 
                     let html = '';
@@ -1049,24 +1126,92 @@
             document.getElementById('s-auto-ui').style.display = mode === 'auto' ? 'block' : 'none';
         }
 
+        let tempSchedules = {};
+        let activeDayTab = 1;
+
+        function saveCurrentTabInputs() {
+            const inputs = document.querySelectorAll('.schedule-slot-input');
+            if (inputs.length > 0) {
+                const mapels = Array.from(inputs).map(inp => inp.value.trim() || '').join(',');
+                tempSchedules[activeDayTab] = mapels;
+            }
+        }
+
+        function switchDayTab(dayIdx) {
+            saveCurrentTabInputs();
+            document.querySelectorAll('.day-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-day-' + dayIdx).classList.add('active');
+            activeDayTab = dayIdx;
+            renderScheduleInputs();
+        }
+
+        function renderScheduleInputs() {
+            const container = document.getElementById('schedule-inputs-container');
+            container.innerHTML = '';
+            
+            let subjectsForDayStr = tempSchedules[activeDayTab];
+            let subjectsForDay = subjectsForDayStr ? subjectsForDayStr.split(',').map(s => s.trim()) : [];
+            
+            let timingType = document.getElementById('s-timing-type').value;
+            const tType = timingType === 'auto_detect' ? 'normal' : timingType;
+            const slots = timings[tType].filter(s => typeof s.id === 'number');
+
+            for (let i = 0; i < 10; i++) {
+                const slot = slots[i] || { name: `Jam ${i+1}`, start: '-', end: '-' };
+                const row = document.createElement('div');
+                row.className = 'schedule-slot-row';
+                
+                const label = document.createElement('div');
+                label.className = 'schedule-slot-label';
+                label.innerText = `${slot.name} (${slot.start} - ${slot.end})`;
+                
+                const select = document.createElement('select');
+                select.className = 'schedule-slot-input';
+                select.style.padding = '8px';
+                select.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                select.style.color = 'white';
+                select.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                select.style.borderRadius = '6px';
+                select.style.outline = 'none';
+                
+                const currentVal = subjectsForDay[i] || '';
+                const mapelList = ["", "Matematika", "B.INDO", "B.INGG", "IPA", "IPS", "PPKn", "PJOK", "AGAMA", "KEAGAMAAN", "SB/Prky", "Informatika", "B.JAWA", "BK"];
+                
+                // If the database has a custom mapel not in the predefined list, append it so it doesn't get lost
+                if (currentVal && !mapelList.includes(currentVal)) {
+                    mapelList.push(currentVal);
+                }
+
+                mapelList.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.innerText = m === "" ? "- Kosong -" : m;
+                    if (m === currentVal) opt.selected = true;
+                    select.appendChild(opt);
+                });
+                
+                row.appendChild(label);
+                row.appendChild(select);
+                container.appendChild(row);
+            }
+        }
+
         function toggleScheduleEdit() {
             const form = document.getElementById('schedule-edit-form');
             if (form.style.display === 'none') {
                 form.style.display = 'block';
 
-                document.getElementById('s-mode').value = currentTeacherInfo.mode || 'manual';
+                document.getElementById('s-mode').value = currentTeacherInfo.mode || 'auto';
                 document.getElementById('input-s-subject').value = currentTeacherInfo.subject !== 'Kosong' ? (currentTeacherInfo.subject || '') : '';
                 document.getElementById('input-s-time').value = currentTeacherInfo.time !== '-' ? (currentTeacherInfo.time || '') : '';
                 document.getElementById('input-s-note').value = currentTeacherInfo.note !== '-' ? (currentTeacherInfo.note || '') : '';
 
                 document.getElementById('s-timing-type').value = currentTeacherInfo.timingType || 'auto_detect';
 
-                const sched = currentTeacherInfo.schedule || defaultSchedule;
-                document.getElementById('input-s-senin').value = sched['1'] || '';
-                document.getElementById('input-s-selasa').value = sched['2'] || '';
-                document.getElementById('input-s-rabu').value = sched['3'] || '';
-                document.getElementById('input-s-kamis').value = sched['4'] || '';
-                document.getElementById('input-s-jumat').value = sched['5'] || '';
+                for (let i = 1; i <= 5; i++) {
+                    tempSchedules[i] = dbSchedules[i] || defaultSchedule[i];
+                }
+                switchDayTab(1);
 
                 toggleScheduleModeUI();
             } else {
@@ -1089,20 +1234,22 @@
                 payloadObj.subject = document.getElementById('input-s-subject').value || 'Kosong';
                 payloadObj.time = document.getElementById('input-s-time').value || '-';
             } else {
+                saveCurrentTabInputs();
                 payloadObj.timingType = document.getElementById('s-timing-type').value;
-                payloadObj.schedule = {
-                    '1': document.getElementById('input-s-senin').value,
-                    '2': document.getElementById('input-s-selasa').value,
-                    '3': document.getElementById('input-s-rabu').value,
-                    '4': document.getElementById('input-s-kamis').value,
-                    '5': document.getElementById('input-s-jumat').value
-                };
+                
+                const scheduleUpdates = [];
+                for (let i = 1; i <= 5; i++) {
+                    scheduleUpdates.push({ day_id: i.toString(), subjects: tempSchedules[i] });
+                }
+                const { error: sErr } = await supabaseClient.from('Schedules').upsert(scheduleUpdates);
+                if (sErr) {
+                    alert("Gagal menyimpan jadwal mapel ke database: " + sErr.message);
+                    return;
+                }
             }
 
             const payload = JSON.stringify(payloadObj);
-
             const { data: checkData } = await supabaseClient.from('Seats').select('*').eq('seat_id', 'TEACHER');
-
             let res;
             if (checkData && checkData.length > 0) {
                 res = await supabaseClient.from('Seats').update({ name: payload, absen: 0 }).eq('seat_id', 'TEACHER');
@@ -1111,11 +1258,12 @@
             }
 
             if (res.error) {
-                alert("Gagal menyimpan info jadwal");
+                alert("Gagal menyimpan info jadwal utama: " + res.error.message);
                 console.error(res.error);
             } else {
                 closeModal();
                 loadSeats();
+                if (mode !== 'manual') fetchSchedules();
             }
         }
 
@@ -1138,7 +1286,8 @@
         }
 
         async function toggleHolidayStatus() {
-            const isHoliday = document.getElementById("admin-holiday-toggle").checked;
+            const toggleEl = document.getElementById("admin-holiday-toggle");
+            const isHoliday = toggleEl.checked;
             const today = new Date();
             const todayStr = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0') + "-" + String(today.getDate()).padStart(2, '0');
 
@@ -1146,14 +1295,25 @@
             currentTeacherInfo.holidayOverrideValue = isHoliday;
 
             const payload = JSON.stringify(currentTeacherInfo);
+            toggleEl.disabled = true; // prevent double clicks
+            
             const { data: checkData } = await supabaseClient.from('Seats').select('*').eq('seat_id', 'TEACHER');
-
+            let res;
             if (checkData && checkData.length > 0) {
-                await supabaseClient.from('Seats').update({ name: payload, absen: 0 }).eq('seat_id', 'TEACHER');
+                res = await supabaseClient.from('Seats').update({ name: payload, absen: 0 }).eq('seat_id', 'TEACHER');
             } else {
-                await supabaseClient.from('Seats').insert({ seat_id: 'TEACHER', name: payload, absen: 0 });
+                res = await supabaseClient.from('Seats').insert({ seat_id: 'TEACHER', name: payload, absen: 0 });
             }
-            loadSeats();
+            
+            toggleEl.disabled = false;
+            if (res.error) {
+                alert("Gagal menyimpan status libur: " + res.error.message);
+                console.error(res.error);
+                toggleEl.checked = !isHoliday; // revert visually
+                currentTeacherInfo.holidayOverrideValue = !isHoliday;
+            } else {
+                loadSeats();
+            }
         }
 
         function promptDeleteAll() {
@@ -1489,8 +1649,16 @@
         supabaseClient
             .channel('realtime-seats')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'Seats' }, payload => {
-                console.log('Update terdeteksi dari database:', payload);
+                console.log('Update Seats terdeteksi:', payload);
                 loadSeats();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'Schedules' }, payload => {
+                console.log('Update Schedules terdeteksi:', payload);
+                fetchSchedules();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'Holidays' }, payload => {
+                console.log('Update Holidays terdeteksi:', payload);
+                fetchHolidays();
             })
             .subscribe();
     </script>
